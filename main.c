@@ -4,6 +4,7 @@ char website_list[100][50];
 
 
 char* deleteNewline(char str[50]){
+
 	int k;
 	k = strlen(str)-1;
 	if(str[k] == '\n') 
@@ -12,10 +13,33 @@ char* deleteNewline(char str[50]){
 }
 
 
+int createBackup(){
+
+    system("sudo cp /private/etc/hosts /private/etc/hosts_backup");
+
+    return 0;
+}
+
+
+int revertOriginal(){
+
+	if (access("/private/etc/hosts_backup", 0) == 0) { 
+    	system("sudo rm /private/etc/hosts");
+    	system("mv /private/etc/hosts_backup /private/etc/hosts");
+    	printf("Websites unblocked. Original hosts file restored.\n");
+	} 
+	else { 
+	    printf("ERROR: Original backup hosts file not found. It's not possible to 'unblock' websites. Consider doing it manually.  \n");
+	}
+
+	return 0;
+}
+
+
 int getWebsites(){
 	
 	int i = 0;
-	printf("Enter a website to block. Once you are done, just press Enter. \n");
+	printf("Enter a website to block. Once you are done, just press Enter.\n");
 
 	while(1){
 		printf("Website #%d: ", i+1);
@@ -30,6 +54,15 @@ int getWebsites(){
 	}
 
 	return i;
+}
+
+
+int getTime(){
+
+	int time = 0;
+	printf("How long do you want to block? (time in minutes, 0 for permanent block): ");
+	scanf("%d", &time);
+	return time;
 }
 
 
@@ -61,8 +94,19 @@ int appendToFile(int max){
 int main() {
 
 	int nWebsites = getWebsites();
+	int time = getTime();
+	createBackup();
 	appendToFile(nWebsites);
 	printf("Requested websites have been blocked successfully!\n");
+
+	if(time){
+		printf("Blocking for %d minutes. Countdown started.\n", time);
+		sleep(time*60);
+		printf("Time has expired. Unblocking websites...\n");
+		revertOriginal();
+	}else{
+		printf("A copy of the original hosts file has been saved as hosts_backup.\n");
+	}
 
 	return 0;
 }
